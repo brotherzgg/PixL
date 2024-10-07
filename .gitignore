@@ -1,0 +1,18 @@
+# Ignore node_modules (dependencies installed via npm)
+node_modules/
+
+# Ignore environment variables file (which contains sensitive data)
+.env
+
+# Ignore logs
+logs
+*.log
+
+# Ignore OS-specific files (MacOS)
+.DS_Store
+
+# Ignore other system files
+Thumbs.db
+
+# Ignore npm debug file
+npm-debug.log*

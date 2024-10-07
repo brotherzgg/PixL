@@ -1,0 +1,12 @@
+{
+  "name": "paypal-integration",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "paypal-rest-sdk": "^1.8.1"
+  }
+}
