@@ -1,0 +1,26 @@
+# Node modules - these are installed via package.json and don't need to be tracked
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment variables - don't expose sensitive data like API keys or secrets
+.env
+.env.local
+.env.*.local
+
+# Netlify build output
+.netlify/
+
+# Build output
+dist/
+build/
+
+# Debug files (MacOS, etc.)
+.DS_Store
+
+# Dependency directories
+.npm/
+.yarn/
