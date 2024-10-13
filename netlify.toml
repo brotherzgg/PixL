@@ -1,0 +1,7 @@
+[build]
+  functions = "netlify/functions"  # This should point to where your serverless functions are
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/index"
+  status = 200
