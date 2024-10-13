@@ -1,12 +1,13 @@
 {
-  "name": "paypal-backend",
+  "name": "paypal-integration",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "main": "functions/index.js",
   "dependencies": {
-    "express": "^4.17.1",
-    "serverless-http": "^2.7.0",
-    "@paypal/checkout-server-sdk": "^1.0.2",
-    "body-parser": "^1.19.0"
+    "node-fetch": "^2.x.x" // Ensure this line is present
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "engines": {
+    "node": "18.x" // or the version you are using
   }
 }
