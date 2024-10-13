@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "functions/index.js",
   "dependencies": {
-    "node-fetch": "^2.x.x" // Ensure this line is present
+    "node-fetch": "^2.x.x"
   },
   "devDependencies": {},
   "scripts": {},
   "engines": {
-    "node": "18.x" // or the version you are using
+    "node": "18.x"
   }
 }
