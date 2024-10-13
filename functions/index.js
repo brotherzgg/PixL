@@ -1,28 +1,42 @@
-const express = require('express');
-const serverless = require('serverless-http');
-const bodyParser = require('body-parser');
-const paypal = require('@paypal/checkout-server-sdk');
+const fetch = require('node-fetch');
 
-const app = express();
-app.use(bodyParser.json());
-
-const Environment = paypal.core.SandboxEnvironment;
-const paypalClient = new paypal.core.PayPalHttpClient(new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET));
-
-app.post('/create-order', async (req, res) => {
-    const request = new paypal.orders.OrdersCreateRequest();
-    request.prefer("return=representation");
-    request.requestBody({
-        intent: 'CAPTURE',
-        purchase_units: [{ amount: { currency_code: 'USD', value: '10.00' } }]
-    });
-
-    try {
-        const order = await paypalClient.execute(request);
-        res.status(201).json({ id: order.result.id });
-    } catch (err) {
-        res.status(500).send(err.toString());
+exports.handler = async (event, context) => {
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            body: JSON.stringify({ message: 'Method Not Allowed' })
+        };
     }
-});
 
-module.exports.handler = serverless(app);
+    // Your PayPal order creation logic here
+    try {
+        const response = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${Buffer.from(process.env.PAYPAL_CLIENT_ID + ':' + process.env.PAYPAL_CLIENT_SECRET).toString('base64')}`
+            },
+            body: JSON.stringify({
+                intent: 'CAPTURE',
+                purchase_units: [{
+                    amount: {
+                        currency_code: 'USD',
+                        value: '10.00'
+                    }
+                }]
+            })
+        });
+
+        const data = await response.json();
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(data)
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Server Error', error: error.message })
+        };
+    }
+};
