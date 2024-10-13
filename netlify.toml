@@ -1,5 +1,5 @@
 [build]
-  functions = "netlify/functions"  # This should point to where your serverless functions are
+  functions = "functions"
 
 [[redirects]]
   from = "/*"
