@@ -33,52 +33,62 @@ async function getAccessToken() {
 
 // Route to create order
 router.post("/create-order", async (req, res) => {
-  const accessToken = await getAccessToken();
-  
-  const orderPayload = {
-    intent: "CAPTURE",
-    purchase_units: [{
-      amount: {
-        currency_code: "USD",
-        value: "10.00"  // Set the amount you want to charge
+  try {
+    const accessToken = await getAccessToken();
+
+    const orderPayload = {
+      intent: "CAPTURE",
+      purchase_units: [{
+        amount: {
+          currency_code: "USD",
+          value: "10.00"  // Set the amount you want to charge
+        }
+      }],
+      application_context: {
+        return_url: "https://pixlcore.netlify.app/success",  // Redirect to success URL
+        cancel_url: "https://pixlcore.netlify.app/cancel"    // Redirect to cancel URL
       }
-    }],
-    application_context: {
-      return_url: "https://pixlcore.netlify.app/success",  // Redirect to success URL
-      cancel_url: "https://pixlcore.netlify.app/cancel"    // Redirect to cancel URL
-    }
-  };
+    };
 
-  const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(orderPayload)
-  });
+    const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(orderPayload)
+    });
 
-  const order = await response.json();
-  res.json(order);  // Send the entire order JSON, which includes the links
+    const order = await response.json();
+    res.json(order);  // Send the entire order JSON, which includes the links
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Failed to create order" });
+  }
 });
 
 // Route to capture order
 router.post("/capture-order", async (req, res) => {
-  const orderId = req.query.orderId;  // Order ID passed as query parameter
-  const accessToken = await getAccessToken();
+  try {
+    const orderId = req.query.orderId;  // Order ID passed as query parameter
+    const accessToken = await getAccessToken();
 
-  const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
+    const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
 
-  const response = await fetch(captureUrl, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    }
-  });
+    const response = await fetch(captureUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
+    });
 
-  const capture = await response.json();
-  res.json(capture);  // Send the capture result to the client
+    const capture = await response.json();
+    res.json(capture);  // Send the capture result to the client
+  } catch (error) {
+    console.error("Error capturing order:", error);
+    res.status(500).json({ error: "Failed to capture order" });
+  }
 });
 
 // Use the router for all requests
