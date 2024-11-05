@@ -1,20 +1,44 @@
 const express = require("express");
 const serverless = require("serverless-http");
 const fetch = require("node-fetch");
+const admin = require("firebase-admin");
+
 const app = express();
 const router = express.Router();
 
-// PayPal API credentials from Netlify environment variables
+// Initialize Firebase Admin SDK
+const serviceAccount = {
+  "type": "service_account",
+  "project_id": process.env.FIREBASE_PROJECT_ID,
+  "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
+  "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  "client_email": process.env.FIREBASE_CLIENT_EMAIL,
+  "client_id": process.env.FIREBASE_CLIENT_ID,
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
+};
+
+// Initialize Firebase if it hasn't been already
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
+  });
+}
+
+const db = admin.database();
+
+// PayPal API credentials
 const clientId = process.env.PAYPAL_CLIENT_ID;
 const secret = process.env.PAYPAL_SECRET;
-
-// URLs for PayPal's sandbox API
 const baseUrl = "https://api-m.sandbox.paypal.com";
 
 // Middleware to parse JSON
 app.use(express.json());
 
-// Helper function to get access token
+// Helper function to get PayPal access token
 async function getAccessToken() {
   const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
   
@@ -33,65 +57,70 @@ async function getAccessToken() {
 
 // Route to create order
 router.post("/create-order", async (req, res) => {
-  try {
-    const accessToken = await getAccessToken();
-
-    const orderPayload = {
-      intent: "CAPTURE",
-      purchase_units: [{
-        amount: {
-          currency_code: "USD",
-          value: "10.00"  // Set the amount you want to charge
-        }
-      }],
-      application_context: {
-        return_url: "https://pixlcore.netlify.app/success",  // Redirect to success URL
-        cancel_url: "https://pixlcore.netlify.app/cancel"    // Redirect to cancel URL
+  const accessToken = await getAccessToken();
+  
+  const orderPayload = {
+    intent: "CAPTURE",
+    purchase_units: [{
+      amount: {
+        currency_code: "USD",
+        value: "10.00"
       }
-    };
+    }],
+    application_context: {
+      return_url: "https://pixlcore.netlify.app/success",
+      cancel_url: "https://pixlcore.netlify.app/cancel"
+    }
+  };
 
-    const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(orderPayload)
-    });
+  const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(orderPayload)
+  });
 
-    const order = await response.json();
-    res.json(order);  // Send the entire order JSON, which includes the links
-  } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({ error: "Failed to create order" });
-  }
+  const order = await response.json();
+  res.json(order);
 });
 
 // Route to capture order
 router.post("/capture-order", async (req, res) => {
-  try {
-    const orderId = req.query.orderId;  // Order ID passed as query parameter
-    const accessToken = await getAccessToken();
+  const orderId = req.query.orderId;
+  const userId = req.query.userId;
+  const subtype = req.query.subtype;
+  const accessToken = await getAccessToken();
 
-    const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
+  const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
 
-    const response = await fetch(captureUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      }
-    });
+  const response = await fetch(captureUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    }
+  });
 
-    const capture = await response.json();
-    res.json(capture);  // Send the capture result to the client
-  } catch (error) {
-    console.error("Error capturing order:", error);
-    res.status(500).json({ error: "Failed to capture order" });
+  const capture = await response.json();
+
+  // Check if capture was successful
+  if (capture.status === "COMPLETED") {
+    const timestamp = new Date().toISOString();
+    try {
+      await db.ref(`payments/${userId}`).set({
+        timestamp: timestamp,
+        subtype: subtype
+      });
+      res.json({ message: "Payment captured and recorded successfully." });
+    } catch (error) {
+      res.status(500).json({ error: "Payment captured but failed to record in Firebase." });
+    }
+  } else {
+    res.status(400).json({ error: "Failed to capture payment." });
   }
 });
 
-// Use the router for all requests
 app.use("/.netlify/functions/index", router);
-
 module.exports.handler = serverless(app);
