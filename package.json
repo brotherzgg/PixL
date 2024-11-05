@@ -8,9 +8,9 @@
     "build": "netlify-lambda build functions"
   },
   "dependencies": {
+    "firebase-admin": "^11.0.1",
     "express": "^4.17.1",
-    "serverless-http": "^2.3.2",
-    "node-fetch": "^2.6.1",
-    "firebase": "^9.6.1"
+    "serverless-http": "^2.7.0",
+    "node-fetch": "^2.6.1"
   }
 }
