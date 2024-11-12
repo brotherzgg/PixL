@@ -1,76 +1,93 @@
-const admin = require('firebase-admin');
-const paypal = require('@paypal/checkout-server-sdk');
+const admin = require("firebase-admin");
+const fetch = require("node-fetch");
 
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            type: process.env.FIREBASE_TYPE,
-            project_id: process.env.FIREBASE_PROJECT_ID,
-            private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-            client_email: process.env.FIREBASE_CLIENT_EMAIL,
-            client_id: process.env.FIREBASE_CLIENT_ID,
-            auth_uri: process.env.FIREBASE_AUTH_URI,
-            token_uri: process.env.FIREBASE_TOKEN_URI,
-            auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
-            client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
-        }),
-        databaseURL: process.env.FIREBASE_DATABASE_URL
-    });
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  });
 }
 
-const Environment = process.env.PAYPAL_ENV === 'production'
-    ? paypal.core.LiveEnvironment
-    : paypal.core.SandboxEnvironment;
-const paypalClient = new paypal.core.PayPalHttpClient(new Environment(
-    process.env.PAYPAL_CLIENT_ID,
-    process.env.PAYPAL_CLIENT_SECRET
-));
+async function getPayPalAccessToken() {
+  const response = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
 
-const captureOrder = async (event, context) => {
-    try {
+  const data = await response.json();
+  return data.access_token;
+}
 
-        const { orderId, userID } = event.queryStringParameters;
+exports.createPaymentHandler = async (event) => {
+  try {
+    const { subtype } = JSON.parse(event.body);
+    const accessToken = await getPayPalAccessToken();
 
-        if (!orderId || !userID) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ message: "Order ID and User ID are required." })
-            };
-        }
+    const orderResponse = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [{ amount: { currency_code: "USD", value: "10.00" } }],
+      }),
+    });
 
-        const request = new paypal.orders.OrdersCaptureRequest(orderId);
-        request.requestBody({});
-        const captureResponse = await paypalClient.execute(request);
+    const orderData = await orderResponse.json();
 
-        if (captureResponse.result.status === 'COMPLETED') {
-            const timestamp = new Date().toISOString();
-
-            const dbRef = admin.database().ref(`payments/${userID}`);
-            await dbRef.set({
-                orderId: orderId,
-                status: "COMPLETED",
-                timestamp: timestamp,
-                subtype: captureResponse.result.purchase_units[0].custom_id || "default"
-            });
-
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ message: "Order captured successfully." })
-            };
-        } else {
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ message: "Failed to capture order." })
-            };
-        }
-    } catch (error) {
-        console.error("Error capturing order:", error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: "Internal Server Error" })
-        };
-    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ approvalUrl: orderData.links.find(link => link.rel === "approve").href }),
+    };
+  } catch (error) {
+    return { statusCode: 500, body: JSON.stringify({ error: "Failed to create payment" }) };
+  }
 };
 
-exports.handler = captureOrder;
+exports.capturePaymentHandler = async (event) => {
+  try {
+    const { userID, subtype, orderId } = JSON.parse(event.body);
+    const accessToken = await getPayPalAccessToken();
+
+    const captureResponse = await fetch(`https:
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const captureData = await captureResponse.json();
+
+    if (captureData.status !== "COMPLETED") {
+      throw new Error("Payment not completed.");
+    }
+
+    const timestamp = new Date().toISOString();
+    const userRef = admin.database().ref(`payments/${userID}`);
+    await userRef.set({ subtype, timestamp });
+
+    return { statusCode: 200, body: JSON.stringify({ message: "Payment captured and data saved successfully" }) };
+  } catch (error) {
+    return { statusCode: 500, body: JSON.stringify({ error: "Failed to capture payment" }) };
+  }
+};
+
+exports.handler = async (event) => {
+  if (event.path === "/create-payment") {
+    return exports.createPaymentHandler(event);
+  } else if (event.path === "/capture-payment") {
+    return exports.capturePaymentHandler(event);
+  }
+  return { statusCode: 404, body: "Not Found" };
+};
