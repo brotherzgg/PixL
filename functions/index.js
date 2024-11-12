@@ -1,3 +1,4 @@
+// functions/index.js
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
@@ -12,6 +13,7 @@ if (!admin.apps.length) {
   });
 }
 
+// Function to create PayPal access token
 async function getPayPalAccessToken() {
   const response = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
     method: "POST",
@@ -26,11 +28,13 @@ async function getPayPalAccessToken() {
   return data.access_token;
 }
 
+// Handler to create a PayPal payment
 exports.createPaymentHandler = async (event) => {
   try {
     const { subtype } = JSON.parse(event.body);
     const accessToken = await getPayPalAccessToken();
 
+    // Create an order
     const orderResponse = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
       method: "POST",
       headers: {
@@ -54,12 +58,14 @@ exports.createPaymentHandler = async (event) => {
   }
 };
 
+// Handler to capture payment and save data to Firebase
 exports.capturePaymentHandler = async (event) => {
   try {
     const { userID, subtype, orderId } = JSON.parse(event.body);
     const accessToken = await getPayPalAccessToken();
 
-    const captureResponse = await fetch(`https:
+    // Capture the payment
+    const captureResponse = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -73,6 +79,7 @@ exports.capturePaymentHandler = async (event) => {
       throw new Error("Payment not completed.");
     }
 
+    // Save data to Firebase
     const timestamp = new Date().toISOString();
     const userRef = admin.database().ref(`payments/${userID}`);
     await userRef.set({ subtype, timestamp });
@@ -83,6 +90,7 @@ exports.capturePaymentHandler = async (event) => {
   }
 };
 
+// Routing based on path
 exports.handler = async (event) => {
   if (event.path === "/create-payment") {
     return exports.createPaymentHandler(event);
