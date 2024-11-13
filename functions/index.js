@@ -1,101 +1,126 @@
-// functions/index.js
-const admin = require("firebase-admin");
+const express = require("express");
+const serverless = require("serverless-http");
 const fetch = require("node-fetch");
+const admin = require("firebase-admin");
 
+const app = express();
+const router = express.Router();
+
+// Initialize Firebase Admin SDK
+const serviceAccount = {
+  "type": "service_account",
+  "project_id": process.env.FIREBASE_PROJECT_ID,
+  "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
+  "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  "client_email": process.env.FIREBASE_CLIENT_EMAIL,
+  "client_id": process.env.FIREBASE_CLIENT_ID,
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
+};
+
+// Initialize Firebase if it hasn't been already
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    }),
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
   });
 }
 
-// Function to create PayPal access token
-async function getPayPalAccessToken() {
-  const response = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+const db = admin.database();
+
+// PayPal API credentials
+const clientId = process.env.PAYPAL_CLIENT_ID;
+const secret = process.env.PAYPAL_SECRET;
+const baseUrl = "https://api-m.sandbox.paypal.com";
+
+// Middleware to parse JSON
+app.use(express.json());
+
+// Helper function to get PayPal access token
+async function getAccessToken() {
+  const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
+  
+  const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded"
     },
-    body: "grant_type=client_credentials",
+    body: "grant_type=client_credentials"
   });
 
   const data = await response.json();
   return data.access_token;
 }
 
-// Handler to create a PayPal payment
-exports.createPaymentHandler = async (event) => {
-  try {
-    const { subtype } = JSON.parse(event.body);
-    const accessToken = await getPayPalAccessToken();
-
-    // Create an order
-    const orderResponse = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        intent: "CAPTURE",
-        purchase_units: [{ amount: { currency_code: "USD", value: "10.00" } }],
-      }),
-    });
-
-    const orderData = await orderResponse.json();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ approvalUrl: orderData.links.find(link => link.rel === "approve").href }),
-    };
-  } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Failed to create payment" }) };
-  }
-};
-
-// Handler to capture payment and save data to Firebase
-exports.capturePaymentHandler = async (event) => {
-  try {
-    const { userID, subtype, orderId } = JSON.parse(event.body);
-    const accessToken = await getPayPalAccessToken();
-
-    // Capture the payment
-    const captureResponse = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const captureData = await captureResponse.json();
-
-    if (captureData.status !== "COMPLETED") {
-      throw new Error("Payment not completed.");
+// Route to create order
+router.post("/create-order", async (req, res) => {
+  const accessToken = await getAccessToken();
+  
+  const orderPayload = {
+    intent: "CAPTURE",
+    purchase_units: [{
+      amount: {
+        currency_code: "USD",
+        value: "10.00"
+      }
+    }],
+    application_context: {
+      return_url: "https://pixlcore.netlify.app/success",
+      cancel_url: "https://pixlcore.netlify.app/cancel"
     }
+  };
 
-    // Save data to Firebase
+  const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(orderPayload)
+  });
+
+  const order = await response.json();
+  res.json(order);
+});
+
+// Route to capture order
+router.post("/capture-order", async (req, res) => {
+  const orderId = req.query.orderId;
+  const userId = req.query.userId;
+  const subtype = req.query.subtype;
+  const accessToken = await getAccessToken();
+
+  const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
+
+  const response = await fetch(captureUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  const capture = await response.json();
+
+  // Check if capture was successful
+  if (capture.status === "COMPLETED") {
     const timestamp = new Date().toISOString();
-    const userRef = admin.database().ref(`payments/${userID}`);
-    await userRef.set({ subtype, timestamp });
-
-    return { statusCode: 200, body: JSON.stringify({ message: "Payment captured and data saved successfully" }) };
-  } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Failed to capture payment" }) };
+    try {
+      await db.ref(`payments/${userId}`).set({
+        timestamp: timestamp,
+        subtype: subtype
+      });
+      res.json({ message: "Payment captured and recorded successfully." });
+    } catch (error) {
+      res.status(500).json({ error: "Payment captured but failed to record in Firebase." });
+    }
+  } else {
+    res.status(400).json({ error: "Failed to capture payment." });
   }
-};
+});
 
-// Routing based on path
-exports.handler = async (event) => {
-  if (event.path === "/create-payment") {
-    return exports.createPaymentHandler(event);
-  } else if (event.path === "/capture-payment") {
-    return exports.capturePaymentHandler(event);
-  }
-  return { statusCode: 404, body: "Not Found" };
-};
+app.use("/.netlify/functions/index", router);
+module.exports.handler = serverless(app);
