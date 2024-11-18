@@ -58,13 +58,24 @@ async function getAccessToken() {
 // Route to create order
 router.post("/create-order", async (req, res) => {
   const accessToken = await getAccessToken();
-  
+  const membershipType = req.body.membershipType; // subtype is the same as membershipType
+  const userId = req.body.userId;
+
+  let amountValue;
+  if (membershipType === 1) {
+    amountValue = "0.99";
+  } else if (membershipType === 2) {
+    amountValue = "9.99";
+  } else {
+    return res.status(400).json({ error: "Invalid membership type" });
+  }
+
   const orderPayload = {
     intent: "CAPTURE",
     purchase_units: [{
       amount: {
         currency_code: "USD",
-        value: "10.00"
+        value: amountValue
       }
     }],
     application_context: {
@@ -83,14 +94,18 @@ router.post("/create-order", async (req, res) => {
   });
 
   const order = await response.json();
+  if (order.id) {
+    await db.ref(`orders/${order.id}`).set({
+      userId: userId,
+      membershipType: membershipType
+    });
+  }
   res.json(order);
 });
 
 // Route to capture order
 router.post("/capture-order", async (req, res) => {
   const orderId = req.query.orderId;
-  const userId = req.query.userId;
-  const subtype = req.query.subtype;
   const accessToken = await getAccessToken();
 
   const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
@@ -107,11 +122,13 @@ router.post("/capture-order", async (req, res) => {
 
   // Check if capture was successful
   if (capture.status === "COMPLETED") {
+    const orderData = await db.ref(`orders/${orderId}`).once("value");
+    const { userId, membershipType } = orderData.val();
     const timestamp = new Date().toISOString();
     try {
       await db.ref(`payments/${userId}`).set({
         timestamp: timestamp,
-        subtype: subtype
+        membershipType: membershipType
       });
       res.json({ message: "Payment captured and recorded successfully." });
     } catch (error) {
