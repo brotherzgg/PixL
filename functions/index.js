@@ -53,7 +53,6 @@ async function getAccessToken() {
 router.post("/create-order", async (req, res) => {
   const accessToken = await getAccessToken();
   const membershipType = req.body.membershipType;
-  const userId = req.body.userId; 
 
   let amountValue;
   if (membershipType === 1) {
@@ -73,7 +72,7 @@ router.post("/create-order", async (req, res) => {
       }
     }],
     application_context: {
-      return_url: `https:
+      return_url: "https://pixlcore.netlify.app/success",
       cancel_url: "https://pixlcore.netlify.app/cancel"
     }
   };
@@ -88,13 +87,17 @@ router.post("/create-order", async (req, res) => {
   });
 
   const order = await response.json();
+  if (order.id) {
+    await db.ref(`orders/${order.id}`).set({
+      membershipType: membershipType
+    });
+  }
   res.json(order);
 });
 
 router.post("/capture-order", async (req, res) => {
   const orderId = req.query.orderId;
   const userId = req.query.userId;
-  const membershipType = req.query.membershipType;
   const accessToken = await getAccessToken();
 
   const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
@@ -110,6 +113,8 @@ router.post("/capture-order", async (req, res) => {
   const capture = await response.json();
 
   if (capture.status === "COMPLETED") {
+    const orderData = await db.ref(`orders/${orderId}`).once("value");
+    const { membershipType } = orderData.val();
     const timestamp = new Date().toISOString();
     try {
       await db.ref(`payments/${userId}/${membershipType}/${timestamp}`).set({
