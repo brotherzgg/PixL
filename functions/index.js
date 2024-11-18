@@ -6,7 +6,6 @@ const admin = require("firebase-admin");
 const app = express();
 const router = express.Router();
 
-// Initialize Firebase Admin SDK
 const serviceAccount = {
   "type": "service_account",
   "project_id": process.env.FIREBASE_PROJECT_ID,
@@ -20,7 +19,6 @@ const serviceAccount = {
   "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
 };
 
-// Initialize Firebase if it hasn't been already
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -30,18 +28,15 @@ if (!admin.apps.length) {
 
 const db = admin.database();
 
-// PayPal API credentials
 const clientId = process.env.PAYPAL_CLIENT_ID;
 const secret = process.env.PAYPAL_SECRET;
 const baseUrl = "https://api-m.sandbox.paypal.com";
 
-// Middleware to parse JSON
 app.use(express.json());
 
-// Helper function to get PayPal access token
 async function getAccessToken() {
   const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
-  
+
   const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: "POST",
     headers: {
@@ -55,10 +50,9 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// Route to create order
 router.post("/create-order", async (req, res) => {
   const accessToken = await getAccessToken();
-  const membershipType = req.body.membershipType; // subtype is the same as membershipType
+  const membershipType = req.body.membershipType; 
   const userId = req.body.userId;
 
   let amountValue;
@@ -95,15 +89,13 @@ router.post("/create-order", async (req, res) => {
 
   const order = await response.json();
   if (order.id) {
-    await db.ref(`orders/${order.id}`).set({
-      userId: userId,
+    await db.ref(`users/${userId}/orders/${order.id}`).set({
       membershipType: membershipType
     });
   }
   res.json(order);
 });
 
-// Route to capture order
 router.post("/capture-order", async (req, res) => {
   const orderId = req.query.orderId;
   const accessToken = await getAccessToken();
@@ -120,15 +112,13 @@ router.post("/capture-order", async (req, res) => {
 
   const capture = await response.json();
 
-  // Check if capture was successful
   if (capture.status === "COMPLETED") {
-    const orderData = await db.ref(`orders/${orderId}`).once("value");
-    const { userId, membershipType } = orderData.val();
+    const orderData = await db.ref(`users/${userId}/orders/${orderId}`).once("value");
+    const { membershipType } = orderData.val();
     const timestamp = new Date().toISOString();
     try {
-      await db.ref(`payments/${userId}`).set({
-        timestamp: timestamp,
-        membershipType: membershipType
+      await db.ref(`payments/${userId}/${membershipType}/${timestamp}`).set({
+        orderId: orderId
       });
       res.json({ message: "Payment captured and recorded successfully." });
     } catch (error) {
