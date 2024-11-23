@@ -6,6 +6,11 @@ const admin = require("firebase-admin");
 const app = express();
 const router = express.Router();
 
+const PAYMENT_TYPES = {
+  MType1: "0.99",
+  MType2: "9.99"
+};
+
 const serviceAccount = {
   "type": "service_account",
   "project_id": process.env.FIREBASE_PROJECT_ID,
@@ -51,24 +56,23 @@ async function getAccessToken() {
 }
 
 router.post("/create-order", async (req, res) => {
-  const accessToken = await getAccessToken();
-  const membershipType = req.body.membershipType;
+  const { type } = req.query; 
 
-  let amountValue;
-  if (membershipType === 1) {
-    amountValue = "0.99";
-  } else if (membershipType === 2) {
-    amountValue = "9.99";
-  } else {
-    return res.status(400).json({ error: "Invalid membership type" });
+  if (!type || !PAYMENT_TYPES[type]) {
+    return res.status(400).json({ 
+      error: "Invalid payment type. Must be one of: " + Object.keys(PAYMENT_TYPES).join(", ") 
+    });
   }
+
+  const amount = PAYMENT_TYPES[type];
+  const accessToken = await getAccessToken();
 
   const orderPayload = {
     intent: "CAPTURE",
     purchase_units: [{
       amount: {
         currency_code: "USD",
-        value: amountValue
+        value: amount  
       }
     }],
     application_context: {
@@ -87,17 +91,13 @@ router.post("/create-order", async (req, res) => {
   });
 
   const order = await response.json();
-  if (order.id) {
-    await db.ref(`orders/${order.id}`).set({
-      membershipType: membershipType
-    });
-  }
   res.json(order);
 });
 
 router.post("/capture-order", async (req, res) => {
   const orderId = req.query.orderId;
   const userId = req.query.userId;
+  const subtype = req.query.subtype;
   const accessToken = await getAccessToken();
 
   const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
@@ -113,12 +113,11 @@ router.post("/capture-order", async (req, res) => {
   const capture = await response.json();
 
   if (capture.status === "COMPLETED") {
-    const orderData = await db.ref(`orders/${orderId}`).once("value");
-    const { membershipType } = orderData.val();
     const timestamp = new Date().toISOString();
     try {
-      await db.ref(`payments/${userId}/${membershipType}/${timestamp}`).set({
-        orderId: orderId
+      await db.ref(`payments/${userId}`).set({
+        timestamp: timestamp,
+        subtype: subtype
       });
       res.json({ message: "Payment captured and recorded successfully." });
     } catch (error) {
