@@ -122,9 +122,19 @@ router.post("/capture-order", async (req, res) => {
 
     const capture = await response.json();
 
+    console.log("Capture Response:", JSON.stringify(capture, null, 2)); // Debug log
+
     if (capture.status === "COMPLETED") {
       const timestamp = new Date().toISOString();
-      const type = capture.purchase_units[0].custom_id;
+
+      // Validate that the custom_id exists
+      const type = capture.purchase_units[0]?.custom_id;
+      if (!type || !PAYMENT_TYPES[type]) {
+        return res.status(400).json({
+          error: "Payment captured but custom_id is missing or invalid in PayPal response.",
+          details: capture
+        });
+      }
 
       try {
         await db.ref(`payments/${userId}`).set({
