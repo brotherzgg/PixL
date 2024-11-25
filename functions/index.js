@@ -56,7 +56,7 @@ async function getAccessToken() {
 }
 
 router.post("/create-order", async (req, res) => {
-  const { type } = req.query; 
+  const { type } = req.query;
 
   if (!type || !PAYMENT_TYPES[type]) {
     return res.status(400).json({ 
@@ -82,56 +82,74 @@ router.post("/create-order", async (req, res) => {
     }
   };
 
-  const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(orderPayload)
-  });
+  try {
+    const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(orderPayload)
+    });
 
-  const order = await response.json();
-  res.json(order);
+    const order = await response.json();
+    res.json(order);
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Failed to create order.", details: error.message || error });
+  }
 });
 
 router.post("/capture-order", async (req, res) => {
   const orderId = req.query.orderId;
   const userId = req.query.userId;
-  const accessToken = await getAccessToken();
 
+  if (!orderId || !userId) {
+    return res.status(400).json({ error: "Missing orderId or userId in the request." });
+  }
+
+  const accessToken = await getAccessToken();
   const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
 
-  const response = await fetch(captureUrl, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
+  try {
+    const response = await fetch(captureUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const capture = await response.json();
+
+    if (capture.status === "COMPLETED") {
+      const timestamp = new Date().toISOString();
+      const type = capture.purchase_units[0].custom_id;
+
+      try {
+        await db.ref(`payments/${userId}`).set({
+          timestamp: timestamp,
+          type: type,
+          amount: PAYMENT_TYPES[type]
+        });
+        res.json({
+          message: "Payment captured and recorded successfully.",
+          type: type,
+          amount: PAYMENT_TYPES[type]
+        });
+      } catch (firebaseError) {
+        console.error("Firebase Write Error:", firebaseError);
+        res.status(500).json({
+          error: "Payment captured but failed to record in Firebase.",
+          details: firebaseError.message || firebaseError
+        });
+      }
+    } else {
+      res.status(400).json({ error: "Failed to capture payment.", details: capture });
     }
-  });
-
-  const capture = await response.json();
-
-  if (capture.status === "COMPLETED") {
-    const timestamp = new Date().toISOString();
-    const type = capture.purchase_units[0].custom_id; 
-
-    try {
-      await db.ref(`payments/${userId}`).set({
-        timestamp: timestamp,
-        type: type,
-        amount: PAYMENT_TYPES[type]
-      });
-      res.json({ 
-        message: "Payment captured and recorded successfully.",
-        type: type,
-        amount: PAYMENT_TYPES[type]
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Payment captured but failed to record in Firebase." });
-    }
-  } else {
-    res.status(400).json({ error: "Failed to capture payment." });
+  } catch (error) {
+    console.error("Error during capture:", error);
+    res.status(500).json({ error: "Unexpected error during payment capture.", details: error.message || error });
   }
 });
 
