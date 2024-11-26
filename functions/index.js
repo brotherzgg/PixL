@@ -125,7 +125,8 @@ router.post("/capture-order", async (req, res) => {
     console.log("Capture Response:", JSON.stringify(capture, null, 2)); // Debug log
 
     if (capture.status === "COMPLETED") {
-      const timestamp = new Date().toISOString();
+      // Get only the date in YY/MM/DD format
+      const timestamp = new Date().toISOString().slice(2, 10).replace(/-/g, "/");
 
       // Access custom_id from captures array
       const type = capture.purchase_units[0]?.payments?.captures[0]?.custom_id;
@@ -143,7 +144,8 @@ router.post("/capture-order", async (req, res) => {
         });
         res.json({
           message: "Payment captured and recorded successfully.",
-          type: type
+          type: type,
+          timestamp: timestamp // Include the new timestamp format in response
         });
       } catch (firebaseError) {
         console.error("Firebase Write Error:", firebaseError);
