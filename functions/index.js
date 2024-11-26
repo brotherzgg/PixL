@@ -139,13 +139,11 @@ router.post("/capture-order", async (req, res) => {
       try {
         await db.ref(`payments/${userId}`).set({
           timestamp: timestamp,
-          type: type,
-          amount: PAYMENT_TYPES[type]
+          type: type
         });
         res.json({
           message: "Payment captured and recorded successfully.",
-          type: type,
-          amount: PAYMENT_TYPES[type]
+          type: type
         });
       } catch (firebaseError) {
         console.error("Firebase Write Error:", firebaseError);
