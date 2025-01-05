@@ -15,7 +15,7 @@ const serviceAccount = {
   "type": "service_account",
   "project_id": process.env.FIREBASE_PROJECT_ID,
   "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
-  "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   "client_email": process.env.FIREBASE_CLIENT_EMAIL,
   "client_id": process.env.FIREBASE_CLIENT_ID,
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -56,12 +56,16 @@ async function getAccessToken() {
 }
 
 router.post("/create-order", async (req, res) => {
-  const { type } = req.query;
+  const { type, userId } = req.query;
 
   if (!type || !PAYMENT_TYPES[type]) {
     return res.status(400).json({ 
       error: "Invalid payment type. Must be one of: " + Object.keys(PAYMENT_TYPES).join(", ") 
     });
+  }
+
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId in the request." });
   }
 
   const amount = PAYMENT_TYPES[type];
@@ -74,10 +78,10 @@ router.post("/create-order", async (req, res) => {
         currency_code: "USD",
         value: amount
       },
-      custom_id: type  
+      custom_id: `${userId}-${type}` // Store userId and type for reference
     }],
     application_context: {
-      return_url: "https://pixlcore.netlify.app/success",
+      return_url: `https://pixlcore.netlify.app/.netlify/functions/index/capture-order`,
       cancel_url: "https://pixlcore.netlify.app/cancel"
     }
   };
@@ -100,12 +104,11 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-router.post("/capture-order", async (req, res) => {
-  const orderId = req.query.orderId;
-  const userId = req.query.userId;
+router.get("/capture-order", async (req, res) => {
+  const orderId = req.query.token;
 
-  if (!orderId || !userId) {
-    return res.status(400).json({ error: "Missing orderId or userId in the request." });
+  if (!orderId) {
+    return res.status(400).json({ error: "Missing token in the request." });
   }
 
   const accessToken = await getAccessToken();
@@ -125,28 +128,34 @@ router.post("/capture-order", async (req, res) => {
     console.log("Capture Response:", JSON.stringify(capture, null, 2)); // Debug log
 
     if (capture.status === "COMPLETED") {
-      // Get only the date in YY/MM/DD format
-      const timestamp = new Date().toISOString().slice(2, 10).replace(/-/g, "/");
+      const customId = capture.purchase_units[0]?.payments?.captures[0]?.custom_id;
 
-      // Access custom_id from captures array
-      const type = capture.purchase_units[0]?.payments?.captures[0]?.custom_id;
-      if (!type || !PAYMENT_TYPES[type]) {
+      if (!customId) {
         return res.status(400).json({
-          error: "Payment captured but custom_id is missing or invalid in PayPal response.",
+          error: "Payment captured but custom_id is missing in PayPal response.",
           details: capture
         });
       }
+
+      const [userId, type] = customId.split("-");
+      if (!userId || !type || !PAYMENT_TYPES[type]) {
+        return res.status(400).json({
+          error: "Invalid custom_id format in PayPal response.",
+          details: customId
+        });
+      }
+
+      // Get only the date in YY/MM/DD format
+      const timestamp = new Date().toISOString().slice(2, 10).replace(/-/g, "/");
 
       try {
         await db.ref(`payments/${userId}`).set({
           timestamp: timestamp,
           type: type
         });
-        res.json({
-          message: "Payment captured and recorded successfully.",
-          type: type,
-          timestamp: timestamp // Include the new timestamp format in response
-        });
+
+        // Redirect to success page with query parameters
+        res.redirect(`https://pixlcore.netlify.app/success?type=${type}&timestamp=${timestamp}`);
       } catch (firebaseError) {
         console.error("Firebase Write Error:", firebaseError);
         res.status(500).json({
