@@ -81,8 +81,8 @@ router.post("/create-order", async (req, res) => {
       custom_id: `${userId}-${type}` // Store userId and type for reference
     }],
     application_context: {
-      return_url: `https://pixlcore.netlify.app/.netlify/functions/index/capture-order`,
-      cancel_url: "https://pixlcore.netlify.app/cancel"
+      return_url: "PixL://payment-success",
+      cancel_url: "PixL://payment-cancel"
     }
   };
 
