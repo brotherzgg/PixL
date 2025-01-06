@@ -8,31 +8,30 @@ const router = express.Router();
 
 const PAYMENT_TYPES = {
   MType1: "0.99",
-  MType2: "9.99"
+  MType2: "9.99",
 };
 
 const serviceAccount = {
-  "type": "service_account",
-  "project_id": process.env.FIREBASE_PROJECT_ID,
-  "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
-  "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  "client_email": process.env.FIREBASE_CLIENT_EMAIL,
-  "client_id": process.env.FIREBASE_CLIENT_ID,
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
 };
 
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
   });
 }
 
 const db = admin.database();
-
 const clientId = process.env.PAYPAL_CLIENT_ID;
 const secret = process.env.PAYPAL_SECRET;
 const baseUrl = "https://api-m.sandbox.paypal.com";
@@ -45,10 +44,10 @@ async function getAccessToken() {
   const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
     method: "POST",
     headers: {
-      "Authorization": `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded"
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials"
+    body: "grant_type=client_credentials",
   });
 
   const data = await response.json();
@@ -59,8 +58,8 @@ router.post("/create-order", async (req, res) => {
   const { type, userId } = req.query;
 
   if (!type || !PAYMENT_TYPES[type]) {
-    return res.status(400).json({ 
-      error: "Invalid payment type. Must be one of: " + Object.keys(PAYMENT_TYPES).join(", ") 
+    return res.status(400).json({
+      error: `Invalid payment type. Must be one of: ${Object.keys(PAYMENT_TYPES).join(", ")}`,
     });
   }
 
@@ -73,27 +72,26 @@ router.post("/create-order", async (req, res) => {
 
   const orderPayload = {
     intent: "CAPTURE",
-    purchase_units: [{
-      amount: {
-        currency_code: "USD",
-        value: amount
+    purchase_units: [
+      {
+        amount: { currency_code: "USD", value: amount },
+        custom_id: `${userId}-${type}`, // Store userId and type for reference
       },
-      custom_id: `${userId}-${type}` // Store userId and type for reference
-    }],
+    ],
     application_context: {
       return_url: "pixl://payment-success",
-      cancel_url: "pixl://payment-cancel"
-    }
+      cancel_url: "pixl://payment-cancel",
+    },
   };
 
   try {
     const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(orderPayload)
+      body: JSON.stringify(orderPayload),
     });
 
     const order = await response.json();
@@ -118,13 +116,12 @@ router.get("/capture-order", async (req, res) => {
     const response = await fetch(captureUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      }
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
     });
 
     const capture = await response.json();
-
     console.log("Capture Response:", JSON.stringify(capture, null, 2)); // Debug log
 
     if (capture.status === "COMPLETED") {
@@ -133,7 +130,7 @@ router.get("/capture-order", async (req, res) => {
       if (!customId) {
         return res.status(400).json({
           error: "Payment captured but custom_id is missing in PayPal response.",
-          details: capture
+          details: capture,
         });
       }
 
@@ -141,26 +138,24 @@ router.get("/capture-order", async (req, res) => {
       if (!userId || !type || !PAYMENT_TYPES[type]) {
         return res.status(400).json({
           error: "Invalid custom_id format in PayPal response.",
-          details: customId
+          details: customId,
         });
       }
 
-      // Get only the date in YY/MM/DD format
       const timestamp = new Date().toISOString().slice(2, 10).replace(/-/g, "/");
 
       try {
         await db.ref(`payments/${userId}`).set({
-          timestamp: timestamp,
-          type: type
+          timestamp,
+          type,
         });
 
-        // Redirect to success page with query parameters
         res.redirect(`https://pixlcore.netlify.app/success?type=${type}&timestamp=${timestamp}`);
       } catch (firebaseError) {
         console.error("Firebase Write Error:", firebaseError);
         res.status(500).json({
           error: "Payment captured but failed to record in Firebase.",
-          details: firebaseError.message || firebaseError
+          details: firebaseError.message || firebaseError,
         });
       }
     } else {
