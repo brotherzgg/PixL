@@ -81,8 +81,8 @@ router.post("/create-order", async (req, res) => {
       custom_id: `${userId}-${type}` // Store userId and type for reference
     }],
     application_context: {
-      return_url: "PixL://payment-success",
-      cancel_url: "PixL://payment-cancel"
+      return_url: "pixl://payment-success",
+      cancel_url: "pixl://payment-cancel"
     }
   };
 
