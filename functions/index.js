@@ -75,12 +75,12 @@ router.post("/create-order", async (req, res) => {
     purchase_units: [
       {
         amount: { currency_code: "USD", value: amount },
-        custom_id: `${userId}-${type}`, // Store userId and type for reference
+        custom_id: `${userId}-${type}`,
       },
     ],
     application_context: {
-      return_url: "pixl://payment-success",
-      cancel_url: "pixl://payment-cancel",
+      return_url: `${req.protocol}://${req.get("host")}/.netlify/functions/index/success`,
+      cancel_url: `${req.protocol}://${req.get("host")}/.netlify/functions/index/cancel`,
     },
   };
 
@@ -102,7 +102,7 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-router.get("/capture-order", async (req, res) => {
+router.get("/success", async (req, res) => {
   const orderId = req.query.token;
 
   if (!orderId) {
@@ -122,7 +122,6 @@ router.get("/capture-order", async (req, res) => {
     });
 
     const capture = await response.json();
-    console.log("Capture Response:", JSON.stringify(capture, null, 2)); // Debug log
 
     if (capture.status === "COMPLETED") {
       const customId = capture.purchase_units[0]?.payments?.captures[0]?.custom_id;
@@ -150,10 +149,10 @@ router.get("/capture-order", async (req, res) => {
           type,
         });
 
-        res.redirect(`https://pixlcore.netlify.app/success?type=${type}&timestamp=${timestamp}`);
+        return res.redirect(`pixl://payment-success?type=${type}&timestamp=${timestamp}`);
       } catch (firebaseError) {
         console.error("Firebase Write Error:", firebaseError);
-        res.status(500).json({
+        return res.status(500).json({
           error: "Payment captured but failed to record in Firebase.",
           details: firebaseError.message || firebaseError,
         });
@@ -165,6 +164,10 @@ router.get("/capture-order", async (req, res) => {
     console.error("Error during capture:", error);
     res.status(500).json({ error: "Unexpected error during payment capture.", details: error.message || error });
   }
+});
+
+router.get("/cancel", (req, res) => {
+  res.redirect("pixl://payment-cancel");
 });
 
 app.use("/.netlify/functions/index", router);
