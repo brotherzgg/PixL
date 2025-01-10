@@ -79,8 +79,8 @@ router.post("/create-order", async (req, res) => {
       },
     ],
     application_context: {
-      return_url: "https://pixlcore.netlify.app/success",
-      cancel_url: "https://pixlcore.netlify.app/cancel",
+      return_url: "pixl://payment-success",
+      cancel_url: "pixl://payment-cancel",
     },
   };
 
