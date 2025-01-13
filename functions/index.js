@@ -11,6 +11,24 @@ const PAYMENT_TYPES = {
   MType2: "9.99",
 };
 
+// Validate environment variables
+const requiredEnvVars = [
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_PRIVATE_KEY",
+  "FIREBASE_CLIENT_EMAIL",
+  "FIREBASE_DATABASE_URL",
+  "PAYPAL_CLIENT_ID",
+  "PAYPAL_SECRET",
+];
+
+requiredEnvVars.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`Missing environment variable: ${key}`);
+    process.exit(1);
+  }
+});
+
+// Firebase Admin SDK setup
 const serviceAccount = {
   type: "service_account",
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -29,6 +47,7 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.FIREBASE_DATABASE_URL,
   });
+  console.log("Firebase Admin initialized successfully.");
 }
 
 const db = admin.database();
@@ -38,37 +57,69 @@ const baseUrl = "https://api-m.sandbox.paypal.com";
 
 app.use(express.json());
 
+// Cache for PayPal token
+let cachedToken = null;
+let tokenExpiry = null;
+
 async function getAccessToken() {
+  if (cachedToken && tokenExpiry > Date.now()) {
+    console.log("Reusing cached PayPal access token.");
+    return cachedToken;
+  }
+
+  console.log("Fetching new PayPal access token...");
   const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
 
-  const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
+  try {
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
 
-  const data = await response.json();
-  return data.access_token;
+    const data = await response.json();
+    if (response.ok) {
+      console.log("PayPal access token fetched successfully.");
+      cachedToken = data.access_token;
+      tokenExpiry = Date.now() + data.expires_in * 1000; // Set token expiry
+      return cachedToken;
+    } else {
+      console.error("Failed to fetch PayPal access token:", data);
+      throw new Error(data.error || "Unknown error occurred while fetching access token.");
+    }
+  } catch (error) {
+    console.error("Error fetching PayPal access token:", error);
+    throw error;
+  }
 }
 
 router.post("/create-order", async (req, res) => {
   const { type, userId } = req.query;
 
+  console.log("Received create-order request:", { type, userId });
+
   if (!type || !PAYMENT_TYPES[type]) {
+    console.error("Invalid payment type:", type);
     return res.status(400).json({
       error: `Invalid payment type. Must be one of: ${Object.keys(PAYMENT_TYPES).join(", ")}`,
     });
   }
 
   if (!userId) {
+    console.error("Missing userId in create-order request.");
     return res.status(400).json({ error: "Missing userId in the request." });
   }
 
   const amount = PAYMENT_TYPES[type];
-  const accessToken = await getAccessToken();
+  let accessToken;
+  try {
+    accessToken = await getAccessToken();
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch PayPal access token." });
+  }
 
   const orderPayload = {
     intent: "CAPTURE",
@@ -84,6 +135,8 @@ router.post("/create-order", async (req, res) => {
     },
   };
 
+  console.log("Creating PayPal order with payload:", orderPayload);
+
   try {
     const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
       method: "POST",
@@ -95,7 +148,13 @@ router.post("/create-order", async (req, res) => {
     });
 
     const order = await response.json();
-    res.json(order);
+    if (response.ok) {
+      console.log("PayPal order created successfully:", order);
+      res.json(order);
+    } else {
+      console.error("Failed to create PayPal order:", order);
+      res.status(500).json({ error: "Failed to create order.", details: order });
+    }
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ error: "Failed to create order.", details: error.message || error });
@@ -105,12 +164,23 @@ router.post("/create-order", async (req, res) => {
 router.get("/success", async (req, res) => {
   const orderId = req.query.token;
 
+  console.log("Processing success callback with orderId:", orderId);
+
   if (!orderId) {
+    console.error("Missing token in success callback request.");
     return res.status(400).json({ error: "Missing token in the request." });
   }
 
-  const accessToken = await getAccessToken();
+  let accessToken;
+  try {
+    accessToken = await getAccessToken();
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch PayPal access token." });
+  }
+
   const captureUrl = `${baseUrl}/v2/checkout/orders/${orderId}/capture`;
+
+  console.log("Capturing PayPal order with URL:", captureUrl);
 
   try {
     const response = await fetch(captureUrl, {
@@ -122,51 +192,35 @@ router.get("/success", async (req, res) => {
     });
 
     const capture = await response.json();
+    if (response.ok && capture.status === "COMPLETED") {
+      console.log("Payment successfully captured:", capture);
 
-    if (capture.status === "COMPLETED") {
       const customId = capture.purchase_units[0]?.payments?.captures[0]?.custom_id;
-
-      if (!customId) {
-        return res.status(400).json({
-          error: "Payment captured but custom_id is missing in PayPal response.",
-          details: capture,
-        });
-      }
-
       const [userId, type] = customId.split("-");
-      if (!userId || !type || !PAYMENT_TYPES[type]) {
-        return res.status(400).json({
-          error: "Invalid custom_id format in PayPal response.",
-          details: customId,
-        });
-      }
-
       const timestamp = new Date().toISOString().slice(2, 10).replace(/-/g, "/");
 
-      try {
-        await db.ref(`payments/${userId}`).set({
-          timestamp,
-          type,
-        });
+      console.log("Recording payment in Firebase:", { userId, type, timestamp });
 
-        return res.redirect(`pixl://payment-success?type=${type}&timestamp=${timestamp}`);
+      try {
+        await db.ref(`payments/${userId}`).set({ timestamp, type });
+        console.log("Payment recorded successfully in Firebase.");
+        return res.redirect(`pixl://payment-success?type=${encodeURIComponent(type)}&timestamp=${encodeURIComponent(timestamp)}`);
       } catch (firebaseError) {
-        console.error("Firebase Write Error:", firebaseError);
-        return res.status(500).json({
-          error: "Payment captured but failed to record in Firebase.",
-          details: firebaseError.message || firebaseError,
-        });
+        console.error("Error writing payment to Firebase:", firebaseError);
+        return res.status(500).json({ error: "Failed to record payment in Firebase.", details: firebaseError.message });
       }
     } else {
+      console.error("Payment capture failed:", capture);
       res.status(400).json({ error: "Failed to capture payment.", details: capture });
     }
   } catch (error) {
-    console.error("Error during capture:", error);
+    console.error("Error capturing payment:", error);
     res.status(500).json({ error: "Unexpected error during payment capture.", details: error.message || error });
   }
 });
 
 router.get("/cancel", (req, res) => {
+  console.log("Payment canceled by user.");
   res.redirect("pixl://payment-cancel");
 });
 
