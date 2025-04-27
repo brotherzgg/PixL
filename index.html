@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixL - Official App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+      color: #ffffff;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    @keyframes gradientMove {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    header {
+      text-align: center;
+      padding: 70px 20px 20px;
+      background: url('https://images.unsplash.com/photo-1625744668427-1d7ecf7a64de?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80') no-repeat center center/cover;
+      background-blend-mode: overlay;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      text-shadow: 0px 0px 10px rgba(0,0,0,0.8);
+    }
+    header p {
+      font-size: 1.2rem;
+      color: #cccccc;
+      text-shadow: 0px 0px 5px rgba(0,0,0,0.6);
+    }
+    .download-btn {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 15px 30px;
+      background: linear-gradient(90deg, #6a11cb, #2575fc);
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      box-shadow: 0 0 10px rgba(106, 17, 203, 0.8);
+      transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .download-btn:hover {
+      background: linear-gradient(90deg, #2575fc, #6a11cb);
+      box-shadow: 0 0 20px rgba(37, 117, 252, 1);
+      transform: scale(1.05);
+    }
+    section.features, section.why-choose {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 30px;
+    }
+    .feature-card, .why-card {
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 400px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .feature-card.reveal, .why-card.reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .feature-card h2, .why-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    .feature-card p, .why-card p {
+      font-size: 1rem;
+      color: #aaaaaa;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      background-color: #111;
+      margin-top: 40px;
+    }
+    footer a {
+      color: #6a11cb;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    @media (min-width: 768px) {
+      section.features, section.why-choose {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>  <header>
+    <h1>PixL</h1>
+    <p>Your Ultimate Fortnite & GFX Tool</p>
+    <a href="https://dl.dropboxusercontent.com/scl/fi/7dkg5ejm33jqb3fegf3h2/PixL-3.2.apk?rlkey=8s8rxk84802uikr26yi0l1lus&st=yih1zk8c&dl=0" class="download-btn">Download App</a>
+  </header>  <section class="features" id="features">
+    <div class="feature-card">
+      <h2>Fortnite Updates</h2>
+      <p>Download the latest compatible Fortnite versions directly through PixL, optimized for mobile devices.</p>
+    </div>
+    <div class="feature-card">
+      <h2>VoiD FX GFX Tool</h2>
+      <p>Enhance your Fortnite graphics settings easily with our built-in GFX optimizer designed for maximum performance.</p>
+    </div>
+  </section>  <section class="why-choose">
+    <div class="why-card">
+      <h2>Lightweight & Fast</h2>
+      <p>PixL is designed to be fast, efficient, and easy to use without unnecessary clutter.</p>
+    </div>
+    <div class="why-card">
+      <h2>Always Updated</h2>
+      <p>We constantly update PixL to ensure you always have access to the latest Fortnite versions and tools.</p>
+    </div>
+    <div class="why-card">
+      <h2>Trusted by Players</h2>
+      <p>Thousands of players rely on PixL to optimize and update their mobile Fortnite experience.</p>
+    </div>
+    <div class="why-card">
+      <h2>Completely Free</h2>
+      <p>PixL is free to use — no hidden fees, no surprises, just pure functionality.</p>
+    </div>
+  </section>  <footer>
+    <p>
+      <a href="privacy-policy.html">Privacy Policy</a> |
+      <a href="terms-of-service.html">Terms of Service</a>
+    </p>
+  </footer>  <script>
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.feature-card, .why-card').forEach(card => {
+      observer.observe(card);
+    });
+  </script></body>
+</html>
