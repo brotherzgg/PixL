@@ -1,21 +1,20 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PixL - Official App</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a2c5b5a64e.js" crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
       background-size: 400% 400%;
       animation: gradientMove 15s ease infinite;
       color: #ffffff;
-      line-height: 1.6;
       overflow-x: hidden;
     }
     @keyframes gradientMove {
@@ -25,7 +24,7 @@
     }
     header {
       text-align: center;
-      padding: 70px 20px 20px;
+      padding: 70px 20px 30px;
       background: url('https://images.unsplash.com/photo-1625744668427-1d7ecf7a64de?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80') no-repeat center center/cover;
       background-blend-mode: overlay;
       background-color: rgba(0, 0, 0, 0.6);
@@ -58,25 +57,48 @@
       box-shadow: 0 0 20px rgba(37, 117, 252, 1);
       transform: scale(1.05);
     }
-    section.features, section.why-choose {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin: 40px 0 20px;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(106, 17, 203, 0.8);
+      position: relative;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 50%;
+      height: 3px;
+      background: linear-gradient(90deg, #6a11cb, #2575fc);
+      margin: 10px auto 0;
+      border-radius: 2px;
+    }
+    .cards-wrapper {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 30px;
+      padding: 0 20px 40px;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
     }
     .feature-card, .why-card {
-      background-color: #1a1a1a;
+      background: rgba(26,26,26,0.8);
       border: 1px solid #333;
       padding: 20px;
       border-radius: 15px;
-      max-width: 400px;
       text-align: center;
       opacity: 0;
       transform: translateY(50px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      transition: all 0.6s ease-out;
+      backdrop-filter: blur(10px);
+      min-height: 150px;
     }
-    .feature-card.reveal, .why-card.reveal {
+    .reveal-down, .reveal-up {
       opacity: 1;
       transform: translateY(0);
     }
@@ -89,74 +111,140 @@
       color: #aaaaaa;
     }
     footer {
+      background: #111;
+      padding: 40px 20px;
       text-align: center;
-      padding: 20px;
-      font-size: 0.9rem;
-      background-color: #111;
-      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      align-items: center;
+    }
+    .footer-section-title {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+      text-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
+    }
+    .footer-links, .footer-socials {
+      list-style: none;
+      padding: 0;
+    }
+    .footer-links li, .footer-socials li {
+      margin: 10px 0;
     }
     footer a {
       color: #6a11cb;
-      margin: 0 10px;
       text-decoration: none;
+      font-size: 1rem;
+      transition: transform 0.3s, background 0.3s, color 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     footer a:hover {
-      text-decoration: underline;
+      color: #2575fc;
+      transform: scale(1.05);
     }
     @media (min-width: 768px) {
-      section.features, section.why-choose {
-        flex-direction: row;
-        justify-content: center;
+      .cards-wrapper {
+        padding: 0 20px 60px;
+      }
+      .feature-card, .why-card {
+        padding: 25px;
+        min-height: 180px;
+      }
+    }
+    @media (min-width: 1200px) {
+      .cards-wrapper {
+        grid-template-columns: repeat(4, 1fr);
       }
     }
   </style>
 </head>
-<body>  <header>
-    <h1>PixL</h1>
-    <p>Your Ultimate Fortnite & GFX Tool</p>
-    <a href="https://dl.dropboxusercontent.com/scl/fi/7dkg5ejm33jqb3fegf3h2/PixL-3.2.apk?rlkey=8s8rxk84802uikr26yi0l1lus&st=yih1zk8c&dl=0" class="download-btn">Download App</a>
-  </header>  <section class="features" id="features">
-    <div class="feature-card">
-      <h2>Fortnite Updates</h2>
-      <p>Download the latest compatible Fortnite versions directly through PixL, optimized for mobile devices.</p>
-    </div>
-    <div class="feature-card">
-      <h2>VoiD FX GFX Tool</h2>
-      <p>Enhance your Fortnite graphics settings easily with our built-in GFX optimizer designed for maximum performance.</p>
-    </div>
-  </section>  <section class="why-choose">
-    <div class="why-card">
-      <h2>Lightweight & Fast</h2>
-      <p>PixL is designed to be fast, efficient, and easy to use without unnecessary clutter.</p>
-    </div>
-    <div class="why-card">
-      <h2>Always Updated</h2>
-      <p>We constantly update PixL to ensure you always have access to the latest Fortnite versions and tools.</p>
-    </div>
-    <div class="why-card">
-      <h2>Trusted by Players</h2>
-      <p>Thousands of players rely on PixL to optimize and update their mobile Fortnite experience.</p>
-    </div>
-    <div class="why-card">
-      <h2>Completely Free</h2>
-      <p>PixL is free to use — no hidden fees, no surprises, just pure functionality.</p>
-    </div>
-  </section>  <footer>
-    <p>
-      <a href="privacy-policy.html">Privacy Policy</a> |
-      <a href="terms-of-service.html">Terms of Service</a>
-    </p>
-  </footer>  <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('reveal');
-        }
-      });
-    }, { threshold: 0.2 });
+<body>
 
-    document.querySelectorAll('.feature-card, .why-card').forEach(card => {
-      observer.observe(card);
+<header>
+  <h1>PixL</h1>
+  <p>Your Ultimate Fortnite & GFX Tool</p>
+  <a href="https://dl.dropboxusercontent.com/scl/fi/7dkg5ejm33jqb3fegf3h2/PixL-3.2.apk?rlkey=8s8rxk84802uikr26yi0l1lus&st=yih1zk8c&dl=0" class="download-btn">Download App</a>
+</header>
+
+<h2 class="section-title">Features</h2>
+<div class="cards-wrapper">
+  <div class="feature-card">
+    <h2>Fortnite Updates</h2>
+    <p>Download the latest compatible Fortnite versions directly through PixL, optimized for mobile devices.</p>
+  </div>
+  <div class="feature-card">
+    <h2>VoiD FX GFX Tool</h2>
+    <p>Enhance your Fortnite graphics settings easily with our built-in GFX optimizer designed for maximum performance.</p>
+  </div>
+</div>
+
+<h2 class="section-title">Why Choose PixL?</h2>
+<div class="cards-wrapper">
+  <div class="why-card">
+    <h2>Lightweight & Fast</h2>
+    <p>PixL is designed to be fast, efficient, and easy to use without unnecessary clutter.</p>
+  </div>
+  <div class="why-card">
+    <h2>Always Updated</h2>
+    <p>We constantly update PixL to ensure you always have access to the latest Fortnite versions and tools.</p>
+  </div>
+  <div class="why-card">
+    <h2>Trusted by Players</h2>
+    <p>Thousands of players rely on PixL to optimize and update their mobile Fortnite experience.</p>
+  </div>
+  <div class="why-card">
+    <h2>Completely Free</h2>
+    <p>PixL is free to use — no hidden fees, no surprises, just pure functionality.</p>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <h3 class="footer-section-title">Legal</h3>
+    <ul class="footer-links">
+      <li><a href="/privacy-policy">Privacy Policy</a></li>
+      <li><a href="/terms-of-service">Terms of Service</a></li>
+      <li><a href="/documentation">Documentation</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3 class="footer-section-title">Social Media</h3>
+    <ul class="footer-socials">
+      <li><a href="https://youtube.com/c/brotherzgg" target="_blank">YouTube <i class="fab fa-youtube"></i></a></li>
+      <li><a href="https://facebook.com/brotherzgg" target="_blank">Facebook <i class="fab fa-facebook"></i></a></li>
+      <li><a href="https://instagram.com/brotherzgg" target="_blank">Instagram <i class="fab fa-instagram"></i></a></li>
+      <li><a href="https://twitter.com/brotherzgg" target="_blank">Twitter <i class="fab fa-twitter"></i></a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+  let lastScrollTop = 0;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (window.scrollY > lastScrollTop) {
+          entry.target.classList.add('reveal-down');
+          entry.target.classList.remove('reveal-up');
+        } else {
+          entry.target.classList.add('reveal-up');
+          entry.target.classList.remove('reveal-down');
+        }
+      } else {
+        entry.target.classList.remove('reveal-down');
+        entry.target.classList.remove('reveal-up');
+      }
     });
-  </script></body>
+    lastScrollTop = window.scrollY <= 0 ? 0 : window.scrollY;
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.feature-card, .why-card').forEach(card => {
+    observer.observe(card);
+  });
+</script>
+
+</body>
 </html>
