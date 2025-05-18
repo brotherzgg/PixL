@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,15 +49,33 @@
       text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 15px;
       align-items: center;
     }
-    .footer-section-title { font-size: 1.5rem; margin-bottom: 15px; color: #ffffff; text-shadow: 0 0 5px rgba(106, 17, 203, 0.5); }
-    .footer-links, .footer-socials { list-style: none; padding: 0; }
-    .footer-links li { margin: 10px 0; }
-    .footer-socials { display: flex; gap: 20px; justify-content: center; }
-    footer a { color: #6a11cb; text-decoration: none; font-size: 1.5rem; transition: transform 0.3s, color 0.3s; display: inline-flex; align-items: center; }
-    footer a:hover { color: #2575fc; transform: scale(1.2); }
+    .footer-section-title { font-size: 1.5rem; margin-bottom: 10px; color: #ffffff; text-shadow: 0 0 5px rgba(106, 17, 203, 0.5); }
+    .footer-links, .footer-socials {
+      list-style: none;
+      padding: 0;
+    }
+    .footer-socials {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      justify-content: center;
+    }
+    .footer-links li, .footer-socials li { list-style-type: none; margin: 5px 0; }
+    footer a {
+      color: #6a11cb;
+      text-decoration: none;
+      font-size: 1.5rem;
+      transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+    }
+    footer a:hover {
+      color: #2575fc;
+      transform: scale(1.2);
+    }
     @media (min-width: 768px) { .privacy-content { padding: 0 40px; } }
   </style>
 </head>
@@ -67,106 +84,84 @@
     <h1>Privacy Policy</h1>
     <p>Last updated April 20, 2025</p>
   </header>
-  <main class="privacy-content">
-    <p>This Privacy Notice for <strong>Brotherz Gaming</strong> ("we," "us," or "our") describes how and why your personal information may be processed when you use our services ("Services"), including when you:</p>
+<main class="privacy-content">
+    <p>This Privacy Notice for <strong>Brotherz Gaming</strong> ("we," "us," or "our") explains how and why your information may be processed when you use our services ("Services"), including when you:</p>
     <ul>
-      <li>Download and use our mobile application (<strong>PixL</strong>), or any other application of ours that links to this Privacy Notice.</li>
+      <li>Download and use our mobile application (<strong>PixL</strong>), or any other application that links to this Privacy Notice.</li>
     </ul>
-    <p><strong>Questions or concerns?</strong> Reading this Privacy Notice will help you understand your privacy rights and choices. If you do not agree with our policies and practices, please do not use our Services. Contact us at: <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
+    <p><strong>Questions?</strong> If you do not agree with our policies, please do not use our Services. For inquiries, contact us at <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p><h2>Summary of Key Points</h2>
+<ul>
+  <li><strong>No personal data collected by us.</strong> We do not collect or store personal information directly.</li>
+  <li><strong>Third-party data collection.</strong> Services like Google Analytics, Firebase, Unity Ads, and Patreon may collect data as described below.</li>
+  <li><strong>Minimal role.</strong> We only perform a temporary Patreon API check for premium status without storing any Patreon data.</li>
+  <li><strong>User rights.</strong> For data held by third parties, please refer to their privacy policies or contact us for assistance.</li>
+</ul>
 
-    <h2>Summary of Key Points</h2>
-    <p>At Brotherz Gaming, we prioritize transparency regarding data handling in PixL:</p>
-    <ul>
-      <li><strong>We do not collect or store your personal information directly.</strong> Third-party services (Google Analytics, Firebase, Unity Ads, Patreon) may collect data for analytics, ads, and membership verification.</li>
-      <li><strong>Our role is minimal.</strong> We only perform a temporary Patreon API check to confirm ad-free membership status, without storing this data.</li>
-      <li><strong>Privacy rights.</strong> Direct data-related requests to these third-party services, as we hold no personal data.</li>
-    </ul>
+<h2>1. Information We Do Not Collect</h2>
+<p>We do not collect personal information such as names, emails, or phone numbers. We do not track you across apps or websites.</p>
 
-    <h2>1. What Information Is Collected?</h2>
-    <p><strong>We do not collect or store personal information directly.</strong> However, third-party services in PixL may collect:</p>
-    <ul>
-      <li><strong>Google Analytics for Firebase</strong>: Usage and device data.</li>
-      <li><strong>Firebase</strong>: Crash reports, device identifiers.</li>
-      <li><strong>Unity Ads</strong>: IP address, Android Advertising ID for ads.</li>
-      <li><strong>Patreon</strong>: Membership status via API (not stored by us).</li>
-    </ul>
-    <p><strong>Examples:</strong> Device model, OS version, IP address, app interactions.</p>
-    <p><strong>Note:</strong> We don’t control these practices. See their policies in Section 4.</p>
+<h2>2. Information Collected by Third Parties</h2>
+<p>Our Services integrate third-party providers that may collect data automatically:</p>
+<ul>
+  <li><strong>Google Analytics for Firebase:</strong> App usage and performance metrics.</li>
+  <li><strong>Firebase Crashlytics:</strong> Crash reports and device identifiers.</li>
+  <li><strong>Unity Ads:</strong> Advertising identifiers (e.g., Android Advertising ID), IP address.</li>
+  <li><strong>Patreon API:</strong> Membership status check only (no storage).</li>
+</ul>
+<p>Examples include device model, OS version, IP address, and app interactions.</p>
 
-    <h2>2. How Do We Process Your Information?</h2>
-    <p><strong>We do not process personal information ourselves.</strong> Third parties process data for:</p>
-    <ul>
-      <li>Analytics (Google).</li>
-      <li>Crash reporting (Firebase).</li>
-      <li>Ads (Unity).</li>
-      <li>Membership verification (Patreon).</li>
-    </ul>
-    <p>Our only action is a temporary Patreon API check, with no storage or further processing.</p>
+<h2>3. How We Use Your Information</h2>
+<p>We do not process personal information ourselves. Third parties use data for analytics, crash reporting, personalized or non-personalized ads delivery, and temporary membership verification.</p>
 
-    <h2>3. What Legal Bases Do We Rely On?</h2>
-    <p>We don’t process data, so legal bases apply to third-party services per their policies.</p>
+<h2>4. Legal Bases for Processing</h2>
+<p>Since we do not process personal data, legal bases apply to third parties under their policies. We comply with GDPR, CCPA, and other privacy regulations.</p>
 
-    <h2>4. When and With Whom Do We Share Your Information?</h2>
-    <p><strong>We do not share personal information.</strong> Third parties may collect data:</p>
-    <table>
-      <tr><th>Service</th><th>Purpose</th></tr>
-      <tr><td>Unity Ads</td><td>Ad display</td></tr>
-      <tr><td>Google Firebase</td><td>Infrastructure, crash reporting</td></tr>
-      <tr><td>Google Analytics</td><td>Analytics</td></tr>
-      <tr><td>Patreon</td><td>Membership verification</td></tr>
-    </table>
-    <p><strong>Policies:</strong> <a href="https://policies.google.com/privacy">Google</a>, <a href="https://firebase.google.com/support/privacy">Firebase</a>, <a href="https://unity.com/legal/privacy-policy">Unity</a>, <a href="https://privacy.patreon.com/policies">Patreon</a>.</p>
+<h2>5. Sharing Your Information</h2>
+<p>We do not share personal data. See third-party processing below:</p>
+<table>
+  <tr><th>Service</th><th>Purpose</th></tr>
+  <tr><td>Unity Ads</td><td>Ad serving and measurement</td></tr>
+  <tr><td>Firebase (Crashlytics, Cloud Messaging)</td><td>Crash reporting and messaging infrastructure</td></tr>
+  <tr><td>Google Analytics for Firebase</td><td>App analytics</td></tr>
+  <tr><td>Patreon</td><td>Membership verification</td></tr>
+</table>
+<p>Refer to policies: <a href="https://policies.google.com/privacy">Google</a>, <a href="https://firebase.google.com/support/privacy">Firebase</a>, <a href="https://unity.com/legal/privacy-policy">Unity</a>, <a href="https://privacy.patreon.com/policies">Patreon</a>.</p>
 
-    <h2>5. What Is Our Stance on Third-Party Websites?</h2>
-    <p>PixL links to third-party sites (e.g., Patreon). We’re not responsible for their data practices.</p>
+<h2>6. Third-Party Websites</h2>
+<p>We link to external sites and are not responsible for their practices.</p>
 
-    <h2>6. Do We Use Cookies or Tracking Technologies?</h2>
-    <p><strong>No cookies in PixL.</strong> Third parties may use identifiers for analytics, ads, or verification. Manage via device settings or: <a href="https://tools.google.com/dlpage/gaoptout">Google Opt-out</a>, <a href="https://unity.com/legal/privacy-policy">Unity</a>, <a href="https://privacy.patreon.com/policies">Patreon</a>.</p>
+<h2>7. Cookies and Tracking Technologies</h2>
+<p>PixL does not use cookies. Third parties may use tracking technologies. Manage via device settings or opt-out links: <a href="https://tools.google.com/dlpage/gaoptout">Google</a>, <a href="https://unity.com/legal/privacy-policy">Unity</a>, <a href="https://privacy.patreon.com/policies">Patreon</a>.</p>
 
-    <h2>7. How Long Do We Keep Your Information?</h2>
-    <p><strong>In Short:</strong> We don’t retain data.</p>
-    <p>Since we do not collect or store personal information, we have no retention period. Temporary Patreon API checks do not involve storing data. See third-party policies for their retention details.</p>
+<h2>8. Data Retention</h2>
+<p>We do not retain personal data; temporary checks leave no stored data. Check third-party retention policies.</p>
 
-    <h2>8. How Do We Keep Your Information Safe?</h2>
-    <p><strong>In Short:</strong> We secure temporary data handling.</p>
-    <p>Although we don’t store personal information, we use reasonable security measures (e.g., encryption) during temporary Patreon API checks. Third parties manage their own security—review their policies.</p>
-    <p><strong>Note:</strong> No transmission is 100% secure.</p>
+<h2>9. Security</h2>
+<p>We use reasonable security for temporary processing; third parties maintain their own measures.</p>
 
-    <h2>9. What Are Your Privacy Rights?</h2>
-    <p><strong>In Short:</strong> Rights apply to third-party data.</p>
-    <p>In regions like the EEA or Canada, you may have access or deletion rights. Since we don’t hold data, contact third parties directly (Section 4 links). Email us at <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a> for assistance.</p>
+<h2>10. Your Privacy Rights</h2>
+<p>You may have rights under various laws to access, correct, or delete data. Contact third parties or email <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
 
-    <h2>10. Controls for Do-Not-Track Features</h2>
-    <p>We don’t respond to DNT signals due to no standard. California residents: We don’t honor DNT currently.</p>
+<h2>11. Do-Not-Track</h2>
+<p>We do not honor DNT signals due to lack of standard. California residents: DNT not supported.</p>
 
-    <h2>11. Do United States Residents Have Specific Privacy Rights?</h2>
-    <p><strong>In Short:</strong> Yes, but we don’t hold your data.</p>
-    <h3>Categories of Personal Information We Collect</h3>
-    <p>Since we do not collect personal information directly, we have not collected any categories in the past twelve (12) months.</p>
-    <h3>How to Exercise Your Rights</h3>
-    <p>States like California offer rights to access or delete data. Direct requests to third parties. Contact us at <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a> for help.</p>
+<h2>12. International Users</h2>
+<p>Users in other regions have rights under local laws. Contact third parties or us for guidance.</p>
 
-    <h2>12. Do Other Regions Have Specific Privacy Rights?</h2>
-    <p>Regions like Australia or South Africa grant rights. Since we don’t process data, contact third parties. Email us for guidance: <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
+<h2>13. Updates to this Policy</h2>
+<p>We may update this policy; changes reflected by updated "Last updated" date.</p>
 
-    <h2>13. Do We Make Updates to This Notice?</h2>
-    <p>Yes, updates will reflect legal changes, indicated by the “Last updated” date. Material changes may be posted in-app.</p>
+<h2>14. Contact Us</h2>
+<p>For questions, email <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
 
-    <h2>14. How Can You Contact Us About This Notice?</h2>
-    <p>Email: <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
+<p><a href="index.html" style="color:#6a11cb; text-decoration:none;">Back to Home</a></p>
 
-    <h2>15. How Can You Review, Update, or Delete the Data We Collect?</h2>
-    <p>We don’t store data. For access or deletion, contact third parties (Section 4). Email us for support: <a href="mailto:contact.brotherzgaming@gmail.com">contact.brotherzgaming@gmail.com</a>.</p>
-
-    <p><a href="index.html">Back to Home</a></p>
   </main>
   <footer>
     <div>
       <h3 class="footer-section-title">Legal</h3>
       <ul class="footer-links">
         <li><a href="privacy-policy.html">Privacy Policy</a></li>
-        <li><a href="terms-of-service.html">Terms of Service</a></li>
-        <li><a href="documentation.html">Documentation</a></li>
       </ul>
     </div>
     <div>
