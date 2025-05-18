@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -65,8 +64,7 @@
       text-shadow: 0 0 10px rgba(106, 17, 203, 0.8);
       position: relative;
       width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 0 auto;
     }
     .section-title::after {
       content: '';
@@ -82,7 +80,6 @@
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 30px;
       padding: 0 20px 40px;
-      width: 100%;
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -116,12 +113,12 @@
       text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 15px;
       align-items: center;
     }
     .footer-section-title {
       font-size: 1.5rem;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       color: #ffffff;
       text-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
     }
@@ -130,50 +127,40 @@
       padding: 0;
     }
     .footer-links li {
-      margin: 10px 0;
+      margin: 5px 0;
     }
     .footer-socials {
-      display: flex; /* Arrange icons horizontally */
-      gap: 20px; /* Space between icons */
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
       justify-content: center;
     }
     footer a {
       color: #6a11cb;
       text-decoration: none;
-      font-size: 1.5rem; /* Increased font size for icons */
+      font-size: 1.5rem;
       transition: transform 0.3s, color 0.3s;
       display: inline-flex;
       align-items: center;
     }
     footer a:hover {
       color: #2575fc;
-      transform: scale(1.2); /* Slightly larger scale for icons on hover */
+      transform: scale(1.2);
     }
     @media (min-width: 768px) {
-      .cards-wrapper {
-        padding: 0 20px 60px;
-      }
-      .feature-card, .why-card {
-        padding: 25px;
-        min-height: 180px;
-      }
+      .cards-wrapper { padding: 0 20px 60px; }
+      .feature-card, .why-card { padding: 25px; min-height: 180px; }
     }
     @media (min-width: 1200px) {
-      .cards-wrapper {
-        grid-template-columns: repeat(4, 1fr);
-      }
+      .cards-wrapper { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
-<body>
-
-<header>
+<body><header>
   <h1>PixL</h1>
   <p>Your Ultimate Fortnite & GFX Tool</p>
   <a href="https://dl.dropboxusercontent.com/scl/fi/7dkg5ejm33jqb3fegf3h2/PixL-3.2.apk?rlkey=8s8rxk84802uikr26yi0l1lus&st=yih1zk8c&dl=0" class="download-btn">Download App</a>
-</header>
-
-<h2 class="section-title">Features</h2>
+</header><h2 class="section-title">Features</h2>
 <div class="cards-wrapper">
   <div class="feature-card">
     <h2>Fortnite Updates</h2>
@@ -183,9 +170,7 @@
     <h2>VoiD FX GFX Tool</h2>
     <p>Enhance your Fortnite graphics settings easily with our built-in GFX optimizer designed for maximum performance.</p>
   </div>
-</div>
-
-<h2 class="section-title">Why Choose PixL?</h2>
+</div><h2 class="section-title">Why Choose PixL?</h2>
 <div class="cards-wrapper">
   <div class="why-card">
     <h2>Lightweight & Fast</h2>
@@ -203,15 +188,11 @@
     <h2>Completely Free</h2>
     <p>PixL is free to use — no hidden fees, no surprises, just pure functionality.</p>
   </div>
-</div>
-
-<footer>
+</div><footer>
   <div>
     <h3 class="footer-section-title">Legal</h3>
     <ul class="footer-links">
       <li><a href="/privacy-policy">Privacy Policy</a></li>
-      <li><a href="/terms-of-service">Terms of Service</a></li>
-      <li><a href="/documentation">Documentation</a></li>
     </ul>
   </div>
   <div>
@@ -223,9 +204,7 @@
       <li><a href="https://twitter.com/brotherzgg" target="_blank"><i class="fab fa-twitter"></i></a></li>
     </ul>
   </div>
-</footer>
-
-<script>
+</footer><script>
   let lastScrollTop = 0;
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -248,7 +227,5 @@
   document.querySelectorAll('.feature-card, .why-card').forEach(card => {
     observer.observe(card);
   });
-</script>
-
-</body>
+</script></body>
 </html>
